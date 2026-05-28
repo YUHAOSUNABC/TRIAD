@@ -1,0 +1,8 @@
+injection_method: clean
+attack_tool: all
+
+attack_types:
+  - clean
+
+defense_type: no_defense
+suffix: sanity_check

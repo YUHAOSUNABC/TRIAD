@@ -1,0 +1,11 @@
+torch
+trl==0.15.1
+transformers
+datasets
+accelerate
+deepspeed
+huggingface_hub
+pandas
+tqdm
+openai
+wandb

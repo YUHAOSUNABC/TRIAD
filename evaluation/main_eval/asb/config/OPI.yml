@@ -1,0 +1,14 @@
+injection_method: observation_prompt_injection
+attack_tool: all
+
+# Default model path. Override with the --llm_path CLI flag (run_eval.sh sets this from
+# the MODEL_DIR env var) or edit to point at any HuggingFace snapshot on disk.
+llm: ./models/Meta-Llama-3.1-8B-Instruct
+
+
+attack_types:
+  - context_ignoring
+  - combined_attack
+
+defense_type: no_defense # delimiters_defense, ob_sandwich_defense, instructional_prevention
+suffix: advance

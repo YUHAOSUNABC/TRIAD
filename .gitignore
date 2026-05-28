@@ -1,0 +1,55 @@
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.claude/
+
+# Model files (too large for GitHub)
+models/*/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+
+# Checkpoints and outputs
+checkpoints/*/
+logs/*.txt
+logs/
+
+# External benchmarks and repos (contain their own .git)
+benchmarks_eval/
+outputs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.nfs*
+
+# Slurm
+*.out
+slurm-*.out
+
+# Documentation (generated)
+*.err
+
+benchmarks_train/InjecAgent/*.json
+benchmarks_train/InjecAgent/**/*.json
+
+benchmarks_train/tool-safety/
+benchmarks_train/R-Judge/
+benchmarks_eval/

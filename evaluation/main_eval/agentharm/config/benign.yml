@@ -1,0 +1,20 @@
+# AgentHarm Benign Behaviors Evaluation Config
+
+# Dataset settings
+task_name: benign
+split: test_public
+
+# Agent settings
+agent_type: advanced_react
+max_rounds: 20
+
+# Defense settings
+defense_type: no_defense
+# defense_type: guardrail
+# guardrail_path: /path/to/guardrail/model
+# guardrail_type: hf
+# max_guardrail_attempts: 3
+
+# Output settings
+output_dir: outputs
+save_interval: 10
