@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRIAD: Guardrail Feedback-Driven LLM Agents</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      line-height: 1.6;
+      color: #222;
+    }
+    h1, h2 {
+      line-height: 1.25;
+    }
+    .authors {
+      font-size: 18px;
+      color: #555;
+    }
+    .links a {
+      display: inline-block;
+      margin: 8px 8px 8px 0;
+      padding: 8px 14px;
+      border-radius: 6px;
+      background: #f0f0f0;
+      color: #222;
+      text-decoration: none;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    pre {
+      background: #f7f7f7;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>From Risk Classification to Action Plan Remediation:<br>
+  A Guardrail Feedback-Driven Framework for LLM Agents</h1>
+
+  <p class="authors">
+    Yuhao Sun, Jiacheng Zhang, Shaanan Cohney, Zhexin Zhang, Feng Liu, Xingliang Yuan
+  </p>
+
+  <div class="links">
+    <a href="paper.pdf">Paper</a>
+    <a href="https://github.com/yuhaos1/agent-guardrail">Code</a>
+    <a href="#">arXiv</a>
+  </div>
+
+  <h2>Overview</h2>
+  <p>
+    We introduce <strong>TRIAD</strong>, a planning-stage guardrail framework that uses
+    verbal feedback and three-way decisions to guide LLM agents to revise unsafe plans
+    while preserving benign tasks.
+  </p>
+
+  <img src="assets/triad_pipeline.png" alt="TRIAD pipeline">
+
+  <h2>Key Idea</h2>
+  <p>
+    Instead of treating guardrails as binary allow-or-block classifiers, TRIAD integrates
+    guardrail feedback into the agent planning loop. The guardrail produces one of three
+    decisions: <strong>Proceed</strong>, <strong>Update</strong>, or <strong>Refuse</strong>.
+    The Update decision guides the agent to revise compromised action plans before tool execution.
+  </p>
+
+  <h2>Citation</h2>
+  <pre><code>@article{sun2026triad,
+  title={From Risk Classification to Action Plan Remediation: A Guardrail Feedback-Driven Framework for LLM Agents},
+  author={Sun, Yuhao and Zhang, Jiacheng and Cohney, Shaanan and Zhang, Zhexin and Liu, Feng and Yuan, Xingliang},
+  year={2026}
+}</code></pre>
+
+</body>
+</html>
