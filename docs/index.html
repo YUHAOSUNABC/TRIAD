@@ -3,83 +3,566 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TRIAD: Guardrail Feedback-Driven LLM Agents</title>
+  <title>TRIAD: A Guardrail Feedback-Driven Framework for LLM Agents</title>
+  <meta name="description" content="TRIAD is a guardrail-integrated agent framework that turns guardrail outputs from binary allow/block signals into actionable verbal feedback, using three-way decisions (Proceed / Update / Refuse) to revise unsafe plans while preserving benign tasks.">
+
+  <!-- Open Graph / social preview -->
+  <meta property="og:title" content="TRIAD: From Risk Classification to Action Plan Remediation">
+  <meta property="og:description" content="A guardrail feedback-driven framework for LLM agents. Average ASR reduced to 10.42% with the best safety–utility trade-off.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/pipeline.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1a1a1f;
+      --muted: #5c6370;
+      --line: #e6e8ec;
+      --accent: #2f5fff;
+      --accent2: #8b3dff;
+      --accent-soft: #eef2ff;
+      --proceed: #1f9d55;
+      --update: #d9870b;
+      --refuse: #d23b3b;
+      --maxw: 980px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      line-height: 1.6;
-      color: #222;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      margin: 0;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
     }
-    h1, h2 {
-      line-height: 1.25;
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
+
+    /* ---------- Top nav ---------- */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: saturate(180%) blur(10px);
+      background: rgba(255,255,255,0.82);
+      border-bottom: 1px solid var(--line);
     }
-    .authors {
-      font-size: 18px;
-      color: #555;
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    nav .brand {
+      font-family: "Space Grotesk", sans-serif; font-weight: 700; letter-spacing: 1px;
+      background: linear-gradient(100deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
     }
-    .links a {
-      display: inline-block;
-      margin: 8px 8px 8px 0;
-      padding: 8px 14px;
-      border-radius: 6px;
-      background: #f0f0f0;
-      color: #222;
-      text-decoration: none;
+    nav .links a { color: var(--muted); margin-left: 20px; font-size: 14px; font-weight: 500; }
+    nav .links a:hover { color: var(--fg); text-decoration: none; }
+    @media (max-width: 720px) { nav .links { display: none; } }
+
+    /* ---------- Hero ---------- */
+    header.hero {
+      background: radial-gradient(1200px 480px at 50% -120px, var(--accent-soft), #fff 70%);
+      border-bottom: 1px solid var(--line);
+      padding: 56px 0 40px;
+      text-align: center;
     }
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin: 16px 0;
+    .venue {
+      display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .4px;
+      color: var(--accent); background: var(--accent-soft);
+      padding: 5px 12px; border-radius: 999px; margin-bottom: 18px;
     }
+    .wordmark {
+      font-family: "Space Grotesk", sans-serif; font-weight: 700;
+      font-size: clamp(52px, 11vw, 104px); letter-spacing: 5px; line-height: 1;
+      margin: 0 0 16px; padding-left: 5px;
+      background: linear-gradient(100deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    h1.title {
+      font-family: "Space Grotesk", -apple-system, sans-serif;
+      font-size: clamp(21px, 3.3vw, 30px);
+      line-height: 1.28; font-weight: 600; margin: 0 0 8px; color: var(--fg);
+    }
+    h1.title .acronym {
+      background: linear-gradient(100deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    .subtitle { color: var(--muted); font-size: 17px; margin: 0 auto 24px; max-width: 760px; }
+    .authors { font-size: 17px; margin: 6px 0; }
+    .authors a { font-weight: 500; }
+    .authors sup { color: var(--accent); font-weight: 600; }
+    .affil { color: var(--muted); font-size: 14px; margin: 6px 0 2px; }
+    .note  { color: var(--muted); font-size: 13px; margin: 2px 0 22px; }
+
+    .buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #15161a; color: #fff; padding: 10px 16px; border-radius: 999px;
+      font-size: 14px; font-weight: 600; border: 1px solid #15161a;
+    }
+    .btn:hover { background: #000; text-decoration: none; }
+    .btn.alt { background: #fff; color: var(--fg); border-color: var(--line); }
+    .btn.alt:hover { border-color: #c9ccd2; background: #fafbfc; }
+    .btn svg { width: 16px; height: 16px; }
+
+    /* ---------- Sections ---------- */
+    section { padding: 46px 0; border-bottom: 1px solid var(--line); }
+    section:last-of-type { border-bottom: none; }
+    h2 {
+      font-family: "Space Grotesk", -apple-system, sans-serif;
+      font-size: 28px; font-weight: 700; text-align: center; margin: 0 0 6px; letter-spacing: -0.3px;
+    }
+    .lead { text-align: center; color: var(--muted); max-width: 720px; margin: 0 auto 26px; }
+    p { margin: 0 0 16px; }
+    .body p { font-size: 16.5px; }
+    .body { max-width: 780px; margin: 0 auto; }
+
+    /* ---------- Stat highlights ---------- */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 8px auto 0; max-width: 880px; }
+    .stat { text-align: center; border: 1px solid var(--line); border-radius: 14px; padding: 20px 10px; background: #fcfcfd; }
+    .stat .num { font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); }
+    .stat .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ---------- Figures ---------- */
+    figure { margin: 22px 0 0; text-align: center; }
+    figure img {
+      max-width: 100%; height: auto; border: 1px solid var(--line);
+      border-radius: 12px; background: #fff; padding: 8px;
+    }
+    figcaption { font-size: 14px; color: var(--muted); margin-top: 12px; max-width: 800px; margin-left: auto; margin-right: auto; }
+    figcaption b { color: var(--fg); }
+
+    /* ---------- Demo video ---------- */
+    .video-frame {
+      position: relative; width: 100%; max-width: 860px; margin: 4px auto 0;
+      aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--line); background: #0e1116;
+      box-shadow: 0 18px 50px -28px rgba(47,95,255,.45);
+    }
+    .video-frame iframe, .video-frame video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .video-ph { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: #aab2c0; text-align: center; padding: 24px; }
+    .video-ph .play { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(100deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px -6px rgba(47,95,255,.6); }
+    .video-ph .play svg { width: 26px; height: 26px; margin-left: 3px; }
+    .video-ph .hint { font-size: 13px; color: #717a89; }
+
+    /* ---------- Decision pills ---------- */
+    .decisions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 26px 0 0; }
+    .decision { border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 16px; }
+    .decision .tag { display: inline-block; font-weight: 700; font-size: 13px; letter-spacing: .5px; padding: 4px 10px; border-radius: 999px; color: #fff; }
+    .decision.p .tag { background: var(--proceed); }
+    .decision.u .tag { background: var(--update); }
+    .decision.r .tag { background: var(--refuse); }
+    .decision h4 { margin: 12px 0 6px; font-size: 16px; }
+    .decision p { font-size: 14.5px; color: var(--muted); margin: 0; }
+    @media (max-width: 720px) { .decisions { grid-template-columns: 1fr; } }
+
+    /* ---------- Tables ---------- */
+    .tablewrap { overflow-x: auto; margin: 22px 0 0; border: 1px solid var(--line); border-radius: 12px; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+    th, td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { background: #f7f8fa; font-weight: 600; color: var(--fg); }
+    td.method, th.method { text-align: left; }
+    tbody tr.group td { background: #f0f3ff; font-weight: 600; color: var(--accent); text-align: left; }
+    tr.ours { background: var(--accent-soft); }
+    tr.ours td { font-weight: 600; }
+    .best { font-weight: 700; }
+    .tcap { font-size: 14px; color: var(--muted); margin: 12px 0 0; text-align: center; }
+
+    /* ---------- BibTeX ---------- */
     pre {
-      background: #f7f7f7;
-      padding: 16px;
-      border-radius: 8px;
-      overflow-x: auto;
+      background: #0e1116; color: #e7ebf0; border-radius: 12px;
+      padding: 18px 20px; overflow-x: auto; font-size: 13.5px; line-height: 1.6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
+    .copybar { display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px; }
+    .copybtn { font-size: 13px; cursor: pointer; border: 1px solid var(--line); background:#fff; border-radius: 8px; padding: 6px 12px; font-weight: 600; }
+    .copybtn:hover { background:#f5f6f8; }
+
+    footer { padding: 30px 0 50px; text-align: center; color: var(--muted); font-size: 13px; }
+    .todo { background:#fff8e6; border:1px solid #f3dca0; color:#7a5a00; border-radius:10px; padding:10px 14px; font-size:13.5px; margin-top:14px; }
   </style>
 </head>
 <body>
 
-  <h1>From Risk Classification to Action Plan Remediation:<br>
-  A Guardrail Feedback-Driven Framework for LLM Agents</h1>
+  <!-- ================= NAV ================= -->
+  <nav>
+    <div class="wrap">
+      <span class="brand">TRIAD</span>
+      <span class="links">
+        <a href="#abstract">Abstract</a>
+        <a href="#demo">Demo</a>
+        <a href="#motivation">Motivation</a>
+        <a href="#data">Data</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#bibtex">BibTeX</a>
+      </span>
+    </div>
+  </nav>
 
-  <p class="authors">
-    Yuhao Sun, Jiacheng Zhang, Shaanan Cohney, Zhexin Zhang, Feng Liu, Xingliang Yuan
-  </p>
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div class="wrap">
+      <span class="venue">Preprint &middot; 2026</span>
+      <div class="wordmark">TRIAD</div>
+      <h1 class="title">From Risk Classification to Action Plan Remediation:<br>
+        A <span class="acronym">Guardrail Feedback-Driven</span> Framework for LLM Agents</h1>
+      <p class="subtitle"><b>T</b>ripartite <b>R</b>esponse for <b>I</b>terative <b>A</b>gent Guar<b>d</b>railing</p>
 
-  <div class="links">
-    <a href="paper.pdf">Paper</a>
-    <a href="https://github.com/yuhaos1/agent-guardrail">Code</a>
-    <a href="#">arXiv</a>
-  </div>
+      <div class="authors">
+        <a href="#">Yuhao Sun</a><sup>1</sup>,
+        <a href="#">Jiacheng Zhang</a><sup>1</sup>,
+        <a href="#">Shaanan Cohney</a><sup>1</sup>,
+        <a href="#">Zhexin Zhang</a><sup>2</sup>,
+        <a href="#">Feng Liu</a><sup>1</sup>,
+        <a href="#">Xingliang Yuan</a><sup>1</sup>
+      </div>
+      <p class="affil"><sup>1</sup>The University of Melbourne &nbsp;&middot;&nbsp; <sup>2</sup>Tsinghua University</p>
+      <p class="note">✱ Affiliations are placeholders — please confirm before publishing.</p>
 
-  <h2>Overview</h2>
-  <p>
-    We introduce <strong>TRIAD</strong>, a planning-stage guardrail framework that uses
-    verbal feedback and three-way decisions to guide LLM agents to revise unsafe plans
-    while preserving benign tasks.
-  </p>
+      <div class="buttons">
+        <a class="btn" href="paper.pdf" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          Paper (PDF)
+        </a>
+        <a class="btn alt" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+          arXiv
+        </a>
+        <a class="btn alt" href="https://github.com/yuhaos1/agent-guardrail" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5 18 5.3 18 5.3c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+          Code
+        </a>
+        <a class="btn alt" href="#bibtex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          BibTeX
+        </a>
+      </div>
+    </div>
+  </header>
 
-  <img src="assets/triad_pipeline.png" alt="TRIAD pipeline">
+  <!-- ================= ABSTRACT ================= -->
+  <section id="abstract">
+    <div class="wrap body">
+      <h2>Abstract</h2>
+      <p>
+        LLM-based guardrails typically safeguard agents by evaluating proposed actions before execution,
+        producing safety signals such as binary allow/deny decisions or risk categories. However, agent
+        risks often arise when otherwise <b>benign tasks are contaminated</b> by untrusted external content,
+        unsafe instructions, or risky tool use. Existing guardrails tend to flag the <i>entire</i> task as
+        unsafe — blocking the threat but sacrificing the benign part — and are largely evaluated in isolation,
+        leaving unclear whether their interventions actually lead to safer downstream behavior.
+      </p>
+      <p>
+        We introduce <b>TRIAD</b> (Tripartite Response for Iterative Agent Guardrailing), a guardrail-integrated
+        agent framework that leverages guardrail-generated <b>verbal feedback</b> as a guiding signal to keep the
+        agent aligned with benign objectives at each planning step. We fine-tune a language model
+        (<b>Tri-Guard</b>) on a self-curated dataset to output one of three decisions —
+        <b>Proceed</b>, <b>Update</b>, or <b>Refuse</b> — together with structured natural-language feedback.
+        Rather than merely allowing or blocking execution, the <b>Update</b> decision guides the agent to revise
+        its plan, avoid harmful components, and preserve the benign task where possible, forming a closed loop
+        between guardrail feedback and agent planning.
+      </p>
+      <p>
+        Extensive experiments on <b>ASB</b> and <b>AgentHarm</b> show that TRIAD reduces the average attack
+        success rate to <b>10.42%</b> while achieving the best safety–utility trade-off among guardrail-integrated
+        baselines.
+      </p>
 
-  <h2>Key Idea</h2>
-  <p>
-    Instead of treating guardrails as binary allow-or-block classifiers, TRIAD integrates
-    guardrail feedback into the agent planning loop. The guardrail produces one of three
-    decisions: <strong>Proceed</strong>, <strong>Update</strong>, or <strong>Refuse</strong>.
-    The Update decision guides the agent to revise compromised action plans before tool execution.
-  </p>
+      <div class="stats">
+        <div class="stat"><div class="num">74.4 → 10.4</div><div class="lbl">Avg. Attack Success Rate (%) ↓</div></div>
+        <div class="stat"><div class="num">28.5 → 68.6</div><div class="lbl">Avg. Task Success Rate (%) ↑</div></div>
+        <div class="stat"><div class="num">80.92</div><div class="lbl">Best Helpfulness–Safety score</div></div>
+        <div class="stat"><div class="num">5,288</div><div class="lbl">Agent trajectories curated</div></div>
+      </div>
+    </div>
+  </section>
 
-  <h2>Citation</h2>
-  <pre><code>@article{sun2026triad,
-  title={From Risk Classification to Action Plan Remediation: A Guardrail Feedback-Driven Framework for LLM Agents},
-  author={Sun, Yuhao and Zhang, Jiacheng and Cohney, Shaanan and Zhang, Zhexin and Liu, Feng and Yuan, Xingliang},
-  year={2026}
-}</code></pre>
+  <!-- ================= DEMO ================= -->
+  <section id="demo">
+    <div class="wrap">
+      <h2>Watch TRIAD in Action</h2>
+      <p class="lead">
+        A short walkthrough of TRIAD intercepting a prompt-injection attack at the planning stage — issuing an
+        <b>Update</b> decision and steering the agent to a safe plan while still completing the benign task.
+      </p>
+      <div class="video-frame">
+        <!-- TO EMBED THE VIDEO, replace the .video-ph block below with ONE of:
+             <video src="assets/demo.mp4" controls poster="assets/pipeline.png"></video>
+             <iframe src="https://www.youtube.com/embed/VIDEO_ID" title="TRIAD demo" allow="fullscreen" allowfullscreen></iframe>
+        -->
+        <div class="video-ph">
+          <div class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
+          <div>Demo video coming soon</div>
+          <div class="hint">Drop a <code>demo.mp4</code> into <code>assets/</code> or paste a YouTube embed here</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MOTIVATION ================= -->
+  <section id="motivation">
+    <div class="wrap">
+      <h2>Why allow-or-block guardrails fall short</h2>
+      <p class="lead">
+        Under prompt injection attacks (PIAs), representative guardrails miss many risks and — even when they
+        detect them — rarely translate detection into safer downstream behavior, while also destroying the benign task.
+      </p>
+      <div class="body">
+        <p>
+          We evaluate representative guardrails against PIAs on <b>AgentSecurityBench (ASB)</b>. These guardrails
+          achieve an average recall of only <b>58.57%</b>; even among detected cases, fewer than <b>37.26%</b> of
+          attacks are successfully blocked, and the agent preserves the benign task in <b>less than 2.31%</b> of
+          cases. After feeding guardrail outputs back into the agent, Attack Success Rate (ASR) remains high while
+          Task Success Rate (TSR) stays low — showing that <b>allow-or-block outputs are insufficient for
+          partially unsafe scenarios.</b>
+        </p>
+      </div>
+      <figure>
+        <img src="assets/fig1_agent_perf.svg" alt="Guardrail and agent performance under PIAs">
+        <figcaption><b>Figure 1.</b> Guardrail and end-to-end agent performance under PIAs. Detected risks do
+          not reliably translate into safe downstream behavior, and benign tasks are rarely preserved.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= DATA ================= -->
+  <section id="data">
+    <div class="wrap">
+      <h2>Trajectory–Feedback Training Data</h2>
+      <p class="lead">
+        A four-stage pipeline turns 5,288 multi-turn agent tasks into query–response pairs of
+        (trajectory → structured feedback + decision).
+      </p>
+      <figure>
+        <img src="assets/dataset.svg" alt="Pipeline for constructing the SFT training dataset">
+        <figcaption><b>Figure 2.</b> Constructing the SFT dataset: (1) collect & rewrite tasks and tools;
+          (2) generate benign and harmful trajectories; (3) distill structured NL feedback and a three-way
+          decision from a teacher model; (4) combine into query–response training pairs.</figcaption>
+      </figure>
+      <div class="body" style="margin-top:24px;">
+        <p>
+          Tasks are drawn from agent-safety benchmarks (InjecAgent, AgentAlign) and jailbreak benchmarks
+          (JailbreakBench, HarmBench), covering three attack settings: <b>Indirect Prompt Injection (IPI)</b>,
+          <b>Direct Prompt Injection (DPI)</b>, and <b>Direct Harmful (DH)</b> tasks. Benign trajectories are
+          labeled <span style="color:var(--proceed);font-weight:600;">Proceed</span>, compromised DPI/IPI
+          trajectories <span style="color:var(--update);font-weight:600;">Update</span>, and direct harmful
+          trajectories <span style="color:var(--refuse);font-weight:600;">Refuse</span>. Teacher annotations whose
+          decision is inconsistent with the ground-truth label are discarded.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= METHOD ================= -->
+  <section id="method">
+    <div class="wrap">
+      <h2>The TRIAD Framework</h2>
+      <p class="lead">
+        At every planning step, <b>Tri-Guard</b> inspects the proposed plan and returns natural-language feedback
+        plus a three-way decision that directly conditions the agent's next move.
+      </p>
+
+      <figure>
+        <img src="assets/pipeline.svg" alt="Overview of the TRIAD pipeline">
+        <figcaption><b>Figure 3.</b> Overview of the TRIAD pipeline. <b>(a)</b> direct execution without
+          guardrail; <b>(b)</b> classic guardrail risk detection that aborts on "unsafe"; <b>(c)</b> TRIAD, an
+          end-to-end loop where guardrail feedback is injected back into the agent context to revise the plan
+          before tool execution.</figcaption>
+      </figure>
+
+      <div class="decisions">
+        <div class="decision p">
+          <span class="tag">PROCEED</span>
+          <h4>Execute the action</h4>
+          <p>The plan is safe and on-goal. The proposed action is executed and the ReAct loop advances to the next step.</p>
+        </div>
+        <div class="decision u">
+          <span class="tag">UPDATE</span>
+          <h4>Revise the plan</h4>
+          <p>The plan is partially unsafe. Feedback is injected via an ICL template so the agent revises its plan,
+            avoids the injected instruction, and preserves the benign goal — checked again, up to K=3 attempts.</p>
+        </div>
+        <div class="decision r">
+          <span class="tag">REFUSE</span>
+          <h4>Block & refuse</h4>
+          <p>The request is purely harmful. The agent produces a plain-text refusal and terminates without any tool execution.</p>
+        </div>
+      </div>
+
+      <div class="body" style="margin-top:28px;">
+        <p>
+          Tri-Guard is built on <b>Qwen3.5-9B</b> and trained with <b>weighted SFT (wSFT)</b>, where each teacher
+          completion is weighted by its confidence. Unlike prior guardrails that emit a generic textual hint after
+          detecting risky tool use, TRIAD explicitly translates feedback into downstream control through
+          decision-conditioned ICL templates and closed-loop plan revision. TRIAD is <b>plug-and-play</b> and
+          requires only black-box access to the target agent.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RESULTS ================= -->
+  <section id="results">
+    <div class="wrap">
+      <h2>Main Results</h2>
+      <p class="lead">
+        Across four agent backbones, TRIAD + Tri-Guard keeps ASR low while achieving the best benign-task
+        preservation (TSR) and the best safety–utility balance (HS) on AgentHarm.
+      </p>
+
+      <!-- Table 1: per-backbone main results (paper Table 1) -->
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="method" rowspan="2">Method</th>
+              <th colspan="3">ASB-DPI</th>
+              <th colspan="3">ASB-IPI</th>
+              <th colspan="2">AgentHarm</th>
+            </tr>
+            <tr>
+              <th>ASR ↓</th><th>TSR ↑</th><th>RR</th>
+              <th>ASR ↓</th><th>TSR ↑</th><th>RR</th>
+              <th>HS ↑</th><th>Harm ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="group"><td colspan="9">Open-Source Agents — Qwen3-32B</td></tr>
+            <tr><td class="method">ReAct</td><td>86.96</td><td>0.00</td><td>7.35</td><td>99.49</td><td>1.57</td><td>0.34</td><td>36.28</td><td>77.04</td></tr>
+            <tr><td class="method">ToolSafe</td><td>10.25</td><td>1.54</td><td>44.98</td><td>10.15</td><td>15.96</td><td>51.37</td><td>67.31</td><td>11.57</td></tr>
+            <tr><td class="method">TRIAD + TS-Guard</td><td class="best">9.75</td><td>1.33</td><td>88.80</td><td class="best">4.24</td><td>0.59</td><td>94.63</td><td>76.15</td><td class="best">8.89</td></tr>
+            <tr class="ours"><td class="method">TRIAD + Tri-Guard</td><td>11.57</td><td class="best">60.83</td><td>32.94</td><td>6.05</td><td class="best">61.59</td><td>13.90</td><td class="best">80.34</td><td>9.87</td></tr>
+
+            <tr class="group"><td colspan="9">Open-Source Agents — Kimi-2.5</td></tr>
+            <tr><td class="method">ReAct</td><td>68.53</td><td>19.19</td><td>9.80</td><td>60.17</td><td>57.72</td><td>3.38</td><td>74.57</td><td>36.90</td></tr>
+            <tr><td class="method">ToolSafe</td><td class="best">2.99</td><td>4.24</td><td>57.26</td><td class="best">2.89</td><td>10.05</td><td>40.88</td><td>68.71</td><td class="best">6.59</td></tr>
+            <tr><td class="method">TRIAD + TS-Guard</td><td>13.26</td><td>15.51</td><td>60.15</td><td>4.38</td><td>30.61</td><td>37.30</td><td>82.25</td><td>15.32</td></tr>
+            <tr class="ours"><td class="method">TRIAD + Tri-Guard</td><td>12.01</td><td class="best">51.10</td><td>18.26</td><td>7.70</td><td class="best">75.14</td><td>6.96</td><td class="best">82.79</td><td>13.26</td></tr>
+
+            <tr class="group"><td colspan="9">Proprietary Agents — Gemini-2.5-Pro</td></tr>
+            <tr><td class="method">ReAct</td><td>92.42</td><td>6.01</td><td>6.26</td><td>88.72</td><td>36.39</td><td>7.49</td><td>58.54</td><td>55.67</td></tr>
+            <tr><td class="method">ToolSafe</td><td class="best">4.53</td><td>7.33</td><td>74.19</td><td>4.73</td><td>10.18</td><td>91.70</td><td>68.49</td><td class="best">10.38</td></tr>
+            <tr><td class="method">TRIAD + TS-Guard</td><td>12.67</td><td>4.07</td><td>84.24</td><td class="best">4.00</td><td>13.21</td><td>87.40</td><td>76.72</td><td>14.81</td></tr>
+            <tr class="ours"><td class="method">TRIAD + Tri-Guard</td><td>11.18</td><td class="best">73.75</td><td>40.20</td><td>6.08</td><td class="best">81.25</td><td>39.23</td><td class="best">80.85</td><td>15.39</td></tr>
+
+            <tr class="group"><td colspan="9">Proprietary Agents — GPT-5.1</td></tr>
+            <tr><td class="method">ReAct</td><td>71.86</td><td>36.30</td><td>4.51</td><td>27.43</td><td>70.42</td><td>3.16</td><td class="best">80.31</td><td>21.71</td></tr>
+            <tr><td class="method">ToolSafe</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+            <tr><td class="method">TRIAD + TS-Guard</td><td class="best">8.41</td><td>8.19</td><td>43.31</td><td class="best">3.50</td><td>52.28</td><td>5.49</td><td>77.58</td><td>15.08</td></tr>
+            <tr class="ours"><td class="method">TRIAD + Tri-Guard</td><td>17.40</td><td class="best">72.38</td><td>7.50</td><td>11.37</td><td class="best">72.75</td><td>4.26</td><td>79.73</td><td class="best">13.66</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tcap"><b>Table 1.</b> Main results across four agent backbones. We compare ReAct, ToolSafe, and TRIAD instantiated with either TS-Guard or Tri-Guard. ASR/Harm lower is better; TSR/HS higher is better; best in <b>bold</b>.</p>
+
+      <!-- Table 2: TRIAD with seven guardrails on Qwen3-32B (paper Table 2) -->
+      <div class="tablewrap" style="margin-top:34px;">
+        <table>
+          <thead>
+            <tr>
+              <th class="method" rowspan="2">Method</th>
+              <th colspan="3">ASB-DPI</th>
+              <th colspan="3">ASB-IPI</th>
+              <th colspan="2">AgentHarm</th>
+            </tr>
+            <tr>
+              <th>ASR ↓</th><th>TSR ↑</th><th>RR</th>
+              <th>ASR ↓</th><th>TSR ↑</th><th>RR</th>
+              <th>HS ↑</th><th>Harm ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="group"><td colspan="9">No defense</td></tr>
+            <tr><td class="method">ReAct</td><td>86.96</td><td>0.00</td><td>7.35</td><td>99.49</td><td>1.57</td><td>0.34</td><td>36.28</td><td>77.04</td></tr>
+            <tr class="group"><td colspan="9">TRIAD with existing guardrails</td></tr>
+            <tr><td class="method">Safiron-7B</td><td>42.18</td><td>0.71</td><td>52.94</td><td>61.08</td><td>8.06</td><td>30.78</td><td>58.20</td><td>46.34</td></tr>
+            <tr><td class="method">ShieldLM-14B</td><td>53.09</td><td>0.02</td><td>42.89</td><td>63.14</td><td>3.48</td><td>35.00</td><td>24.20</td><td class="best">0.70</td></tr>
+            <tr><td class="method">Qwen3Guard-8B</td><td>68.28</td><td>6.54</td><td>19.85</td><td>78.14</td><td>10.15</td><td>12.57</td><td>68.23</td><td>3.80</td></tr>
+            <tr><td class="method">gpt-oss-safeguard-20B</td><td>40.59</td><td>0.93</td><td>52.82</td><td>35.83</td><td>24.73</td><td>56.84</td><td>37.39</td><td>2.42</td></tr>
+            <tr><td class="method">TS-Guard</td><td>9.75</td><td>1.33</td><td>88.80</td><td class="best">4.24</td><td>0.59</td><td>94.63</td><td>76.15</td><td>8.89</td></tr>
+            <tr class="group"><td colspan="9">TRIAD +</td></tr>
+            <tr><td class="method">Qwen3.5-9B (base)</td><td class="best">5.00</td><td>13.28</td><td>82.97</td><td>4.75</td><td>4.80</td><td>88.65</td><td>71.75</td><td>3.96</td></tr>
+            <tr class="ours"><td class="method">Tri-Guard</td><td>11.57</td><td class="best">60.83</td><td>32.94</td><td>6.05</td><td class="best">61.59</td><td>13.90</td><td class="best">80.34</td><td>9.87</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tcap"><b>Table 2.</b> TRIAD instantiated with seven guardrail models on Qwen3-32B. Best in <b>bold</b>.</p>
+
+      <!-- Table 3: average across four backbones (paper Table 3) -->
+      <div class="tablewrap" style="margin-top:34px;">
+        <table>
+          <thead>
+            <tr>
+              <th class="method" rowspan="2">Method</th>
+              <th colspan="3">ASB-DPI</th>
+              <th colspan="3">ASB-IPI</th>
+              <th colspan="2">AgentHarm</th>
+            </tr>
+            <tr>
+              <th>ASR ↓</th><th>TSR ↑</th><th>RR</th>
+              <th>ASR ↓</th><th>TSR ↑</th><th>RR</th>
+              <th>HS ↑</th><th>Harm ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="method">ReAct (no defense)</td><td>79.94</td><td>15.38</td><td>6.98</td><td>68.95</td><td>41.53</td><td>3.59</td><td>62.42</td><td>47.83</td></tr>
+            <tr><td class="method">TRIAD + Qwen3.5-9B (base)</td><td class="best">5.56</td><td>26.30</td><td>60.66</td><td class="best">5.40</td><td>26.53</td><td>53.20</td><td>73.53</td><td class="best">9.90</td></tr>
+            <tr class="ours"><td class="method">TRIAD + Tri-Guard (ours)</td><td>13.04</td><td class="best">64.52</td><td>24.73</td><td>7.80</td><td class="best">72.68</td><td>16.09</td><td class="best">80.92</td><td>13.05</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tcap"><b>Table 3.</b> Average performance over four backbones (Qwen3-32B, Kimi-2.5, Gemini-2.5-Pro, GPT-5.1). Best in <b>bold</b>.</p>
+
+      <figure style="margin-top:34px;">
+        <img src="assets/decision_pies.svg" alt="Distribution of Tri-Guard three-way decisions" style="max-width:780px;">
+        <figcaption><b>Figure 4.</b> Distribution of Tri-Guard's three-way decisions. The <b>Update</b> route lets
+          partially unsafe plans be revised instead of over-refused, which is what preserves benign-task success.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= BIBTEX ================= -->
+  <section id="bibtex">
+    <div class="wrap body">
+      <h2>BibTeX</h2>
+      <div class="copybar">
+        <span style="color:var(--muted);font-size:14px;">Cite this work</span>
+        <button class="copybtn" onclick="copyBib()">Copy</button>
+      </div>
+<pre id="bib">@article{sun2026triad,
+  title   = {From Risk Classification to Action Plan Remediation:
+             A Guardrail Feedback-Driven Framework for LLM Agents},
+  author  = {Sun, Yuhao and Zhang, Jiacheng and Cohney, Shaanan and
+             Zhang, Zhexin and Liu, Feng and Yuan, Xingliang},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>TRIAD project page. Built for research dissemination. © 2026 the authors.</p>
+    </div>
+  </footer>
+
+  <script>
+    function copyBib() {
+      const t = document.getElementById('bib').innerText;
+      navigator.clipboard.writeText(t).then(() => {
+        const b = document.querySelector('.copybtn');
+        b.textContent = 'Copied!';
+        setTimeout(() => b.textContent = 'Copy', 1500);
+      });
+    }
+  </script>
 
 </body>
 </html>
