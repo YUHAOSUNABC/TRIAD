@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="docs/assets/logo.png" height="40" align="middle" alt="TRIAD guardrail logo"> TRIAD
+# <img src="docs/assets/logo.png" height="40" align="top" alt="TRIAD guardrail logo"> TRIAD
 
 ### From Risk Classification to Action Plan Remediation:<br>A Guardrail Feedback-Driven Framework for LLM Agents
 
@@ -69,7 +69,7 @@ TRIAD/
 ├── train/sft_trainer.py              # plain SFT baseline (uniform weighting)
 ├── data/train/sft_training_data.json   # curated SFT training set
 ├── guardrail_prompts.py          # shared guardrail system prompts
-├── models/                       # weight placeholders (see models/README.md)
+├── models/                       # downloaded model weights go here (git-ignored)
 ├── docs/                         # project page + paper PDF + figures
 └── requirements.txt, accelerate_config.yaml, deepspeed_zero{2,3}.json
 ```
@@ -95,7 +95,7 @@ pip install -r requirements.txt
 
 ### ⚠️ Compatibility note — Qwen3.5 base guardrail
 
-The base agent/guardrail uses **[Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-9B)**, which is new enough
+The **Tri-Guard** guardrail is fine-tuned from **[Qwen3.5](https://huggingface.co/Qwen/Qwen3.5-9B)**, which is new enough
 that stable PyPI releases may not load it yet. `requirements.txt` pins the minimum `transformers` / `vllm`,
 but if you hit `model type 'qwen3_5' ... not recognized` (transformers too old) or a `Qwen3_5...Config`
 type error (vLLM too old), install both from source / nightly:
@@ -116,7 +116,7 @@ See the [Qwen3.5-9B model card](https://huggingface.co/Qwen/Qwen3.5-9B) for the 
 # 1. API keys (only needed for closed-source models or LLM-as-judge)
 cp .env.example .env   # then edit with your own keys
 
-# 2. Model weights (place in models/ — see models/README.md)
+# 2. Model weights (download each model into its own subdir under models/)
 export MODEL_DIR="$PWD/models"
 
 # 3. Run AgentHarm evaluation
@@ -130,7 +130,7 @@ bash run_eval.sh
 bash run_guardrail_eval.sh
 ```
 
-## 🏋️ Reproducing Training
+## 🔥 Reproducing Training
 
 The repo ships **two trainers** — both consume the same SFT data, differing only in how samples are weighted:
 
@@ -171,7 +171,7 @@ accelerate launch --config_file accelerate_config.yaml \
 }
 ```
 
-## 🙏 Acknowledgements
+## 🤝 Acknowledgements
 
 Our evaluation builds on [AgentSecurityBench (ASB)](https://github.com/agiresearch/ASB) and
 [AgentHarm](https://github.com/UKGovernmentBEIS/inspect_evals). We thank the authors of these benchmarks.
