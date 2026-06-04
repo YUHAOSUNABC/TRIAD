@@ -1,6 +1,9 @@
 torch
 trl==0.15.1
-transformers
+# Qwen3.5 base guardrail needs transformers 5.x + a recent vLLM.
+# If model loading fails, install both from source/nightly — see README "Compatibility note".
+transformers>=5.4.0
+vllm>=0.16.0
 datasets
 accelerate
 deepspeed

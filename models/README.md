@@ -2,6 +2,10 @@
 
 This directory ships empty. Place model weights (HuggingFace `snapshot_download` layout: `config.json`, `tokenizer*`, `*.safetensors`, etc.) in the subdirectory whose name matches the path expected by `evaluation/main_eval/{agentharm,asb}/run_eval.sh`.
 
+> 📥 **Released checkpoints.** The **Tri-Guard** and **TS-Guard** weights trained for this paper can be
+> downloaded from: _**(download link — coming soon)**_ <!-- TODO: add HuggingFace URL -->.
+> After downloading, place them under `models/guardrail_model/Tri-Guard/` and `models/guardrail_model/TS-Guard/`.
+
 ## Agent models (under `models/`)
 
 | Subdir                 | Source                                                                  |
