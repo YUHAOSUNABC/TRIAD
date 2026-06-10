@@ -2,7 +2,7 @@
 
 # <img src="docs/assets/logo.png" height="40" align="top" alt="TRIAD guardrail logo"> TRIAD
 
-### From Risk Classification to Action Plan Remediation:<br>A Guardrail Feedback-Driven Framework for LLM Agents
+### From Risk Classification to Action Plan Remediation:<br>A Guardrail Feedback Driven Framework for LLM Agents
 
 [Yuhao Sun](#)<sup>1</sup>&nbsp;·&nbsp;
 [Jiacheng Zhang](#)<sup>1</sup>&nbsp;·&nbsp;
@@ -15,7 +15,7 @@
 <sup>†</sup>Corresponding author
 
 [![Paper](https://img.shields.io/badge/Paper-PDF-b31b1b?logo=adobeacrobatreader&logoColor=white)](docs/paper.pdf)
-[![arXiv](https://img.shields.io/badge/arXiv-TBD-b31b1b?logo=arxiv&logoColor=white)](#)
+[![arXiv](https://img.shields.io/badge/arXiv-2606.05805-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2606.05805)
 [![Project Page](https://img.shields.io/badge/Project-Page-1f5fff?logo=githubpages&logoColor=white)](https://yuhaosunabc.github.io/TRIAD/)
 
 </div>
@@ -161,12 +161,12 @@ accelerate launch --config_file accelerate_config.yaml \
 ## 📝 Citation
 
 ```bibtex
-@article{sun2026triad,
+@article{sun2026risk,
   title   = {From Risk Classification to Action Plan Remediation:
-             A Guardrail Feedback-Driven Framework for LLM Agents},
+             A Guardrail Feedback Driven Framework for LLM Agents},
   author  = {Sun, Yuhao and Zhang, Jiacheng and Cohney, Shaanan and
              Zhang, Zhexin and Liu, Feng and Yuan, Xingliang},
-  journal = {arXiv preprint},
+  journal = {arXiv preprint arXiv:2606.05805},
   year    = {2026}
 }
 ```
