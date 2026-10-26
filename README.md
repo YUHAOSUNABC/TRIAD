@@ -17,6 +17,7 @@
 [![Paper](https://img.shields.io/badge/Paper-PDF-b31b1b?logo=adobeacrobatreader&logoColor=white)](docs/paper.pdf)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.05805-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2606.05805)
 [![Project Page](https://img.shields.io/badge/Project-Page-1f5fff?logo=githubpages&logoColor=white)](https://yuhaosunabc.github.io/TRIAD/)
+[![Model](https://img.shields.io/badge/Hugging_Face-TRI--Guard-ffd21e?logo=huggingface&logoColor=black)](https://huggingface.co/asymptote1527/TRI-Guard)
 
 </div>
 
@@ -110,14 +111,27 @@ pip install -U vllm --pre --extra-index-url https://wheels.vllm.ai/nightly
 
 See the [Qwen3.5-9B model card](https://huggingface.co/Qwen/Qwen3.5-9B) for the exact `vllm serve` command (note `--reasoning-parser qwen3`).
 
+## 🤗 Model Checkpoint
+
+The **Tri-Guard checkpoint used in the paper** is publicly available on Hugging Face:
+[**asymptote1527/TRI-Guard**](https://huggingface.co/asymptote1527/TRI-Guard).
+It is fine-tuned from **Qwen3.5-9B** and corresponds to the original SFT `checkpoint-376`
+(epoch 2). The release includes full BF16 weights (approximately 18.8 GB), tokenizer,
+configuration, and the guardrail system prompt in the model card. No Hugging Face login
+or access approval is required to download it.
+
 ## 🛠️ Quickstart
 
 ```bash
 # 1. API keys (only needed for closed-source models or LLM-as-judge)
 cp .env.example .env   # then edit with your own keys
 
-# 2. Model weights (download each model into its own subdir under models/)
+# 2. Download Tri-Guard (download agent models separately into models/)
 export MODEL_DIR="$PWD/models"
+hf download asymptote1527/TRI-Guard \
+    --local-dir "$MODEL_DIR/guardrail_model/Tri-Guard"
+export GUARDRAIL_PATH="$MODEL_DIR/guardrail_model/Tri-Guard"
+export GUARDRAIL_NAME="Tri-Guard"
 
 # 3. Run AgentHarm evaluation
 cd evaluation/main_eval/agentharm
